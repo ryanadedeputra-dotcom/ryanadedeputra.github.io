@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor LKH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF AutoTable Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .nav-link.active { background-color: #1D4ED8; color: white; }
+        .tab-button.active {
+            border-bottom-color: #2563EB; /* border-blue-600 */
+            color: #1E40AF; /* text-blue-800 */
+            font-weight: 600;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Halaman Login (Tampil secara default) -->
+    <div id="login-screen" class="flex items-center justify-center h-screen">
+        <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-lg">
+            <div class="text-center mb-6">
+                <img id="login-logo" class="w-16 h-16 mx-auto rounded-full object-cover" src="https://placehold.co/100x100/3B82F6/FFFFFF?text=LKH" alt="Logo Aplikasi">
+                <h2 id="login-title" class="text-2xl font-bold text-gray-800 mt-4">Dasbor LKH</h2>
+            </div>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="nip" class="block text-sm font-medium text-gray-700">NIP</label>
+                    <input type="text" id="nip" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-700">Sandi</label>
+                    <input type="password" id="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Masuk</button>
+            </form>
+            <div id="message" class="mt-4 text-center text-sm text-red-600"></div>
+        </div>
+    </div>
+
+    <!-- Halaman Dasbor (Tersembunyi secara default) -->
+    <div id="dashboard-screen" class="hidden">
+        <div class="flex h-screen bg-gray-200">
+            <!-- Sidebar Navigasi -->
+            <div class="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white p-4 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 ease-in-out z-30" id="sidebar">
+                <div class="flex items-center mb-8">
+                    <img id="dashboard-logo" class="w-8 h-8 mr-3 rounded-full object-cover" src="https://placehold.co/100x100/3B82F6/FFFFFF?text=LKH" alt="Logo Aplikasi">
+                    <h2 class="text-xl font-bold">Dasbor LKH</h2>
+                </div>
+                <nav id="main-nav" class="flex flex-col h-full">
+                    <div class="flex-grow">
+                        <a href="#utama" class="nav-link active flex items-center py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors">
+                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg>
+                            Halaman Utama
+                        </a>
+                        <a href="#pegawai" id="pegawai-menu" class="nav-link flex items-center py-3 px-4 mt-2 rounded-lg hover:bg-gray-700 transition-colors" style="display: none;">
+                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962A3.75 3.75 0 0112 15v-2.25A3.75 3.75 0 0115.75 9h-1.5a3.75 3.75 0 01-3.75-3.75V3.75A3.75 3.75 0 019 0H7.525A3.75 3.75 0 0111.25 3.75v2.25c0 .994-.478 1.88-1.228 2.468l-3.228 2.152A3.75 3.75 0 016.75 15v2.25a3.75 3.75 0 013.75 3.75z" /></svg>
+                            Daftar Pegawai
+                        </a>
+                        <a href="#rencana" class="nav-link flex items-center py-3 px-4 mt-2 rounded-lg hover:bg-gray-700 transition-colors">
+                             <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h22.5" /></svg>
+                            Rencana Bulanan
+                        </a>
+                        <a href="#laporan" class="nav-link flex items-center py-3 px-4 mt-2 rounded-lg hover:bg-gray-700 transition-colors">
+                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                            Laporan Harian
+                        </a>
+                        <a href="#rekap" class="nav-link flex items-center py-3 px-4 mt-2 rounded-lg hover:bg-gray-700 transition-colors">
+                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>
+                            Rekap Laporan
+                        </a>
+                        <a href="#pengaturan" id="pengaturan-menu" class="nav-link flex items-center py-3 px-4 mt-2 rounded-lg hover:bg-gray-700 transition-colors" style="display: none;">
+                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.48.398.688.982.527 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.332.183-.582.495-.645.87l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.437-.995s-.145-.755-.437-.995l-1.004-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.645-.87l.213-1.28z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            Pengaturan
+                        </a>
+                    </div>
+                     <div>
+                         <button id="logout-button" class="w-full flex items-center py-3 px-4 rounded-lg text-red-400 hover:bg-red-500 hover:text-white transition-colors">
+                            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
+                            Keluar
+                        </button>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Konten Utama -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <header class="flex justify-between items-center bg-white p-4 shadow-md relative">
+                    <button id="menu-button" class="text-gray-500 focus:outline-none md:hidden">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                    <h1 id="page-title" class="text-2xl font-semibold text-gray-800">Halaman Utama</h1>
+                    <div id="user-info" class="text-right text-sm">
+                        <p class="font-semibold text-gray-800" id="user-name-display"></p>
+                        <p class="text-gray-500" id="user-nip-display"></p>
+                    </div>
+                    <!-- Banner Admin View -->
+                    <div id="admin-view-banner" class="hidden absolute top-full left-0 right-0 bg-yellow-400 text-yellow-900 px-4 py-2 text-sm flex justify-between items-center">
+                        <span>Anda sedang melihat sebagai: <strong id="admin-viewing-name"></strong></span>
+                        <button id="return-to-admin-btn" class="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-xs">Kembali ke Admin</button>
+                    </div>
+                </header>
+
+                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 sm:p-6 lg:p-8 no-scrollbar">
+                    <!-- Halaman: Utama -->
+                    <div id="utama-page" class="page-content">
+                        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                            <div class="border-b border-gray-200">
+                                <nav id="utama-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                    <button data-tab="profil" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Profil</button>
+                                    <button data-tab="ubah-profil" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">Ubah Profil & Sandi</button>
+                                </nav>
+                            </div>
+                            <div class="mt-8">
+                                <div id="profil-tab" class="tab-content">
+                                    <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                                        <img class="h-24 w-24 rounded-full" src="https://placehold.co/100x100/E2E8F0/4A5568?text=User" alt="Foto Profil">
+                                        <div>
+                                            <h3 id="profil-nama-display" class="text-2xl font-bold text-gray-900">Nama Pengguna</h3>
+                                            <p id="profil-nip-display" class="text-md text-gray-500">NIP: -</p>
+                                            <p id="profil-jabatan-display" class="text-lg text-gray-600">Jabatan: -</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="ubah-profil-tab" class="tab-content hidden">
+                                    <form id="ubah-profil-form" class="space-y-6 max-w-lg">
+                                        <div>
+                                            <label for="profil-nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                                            <input type="text" id="profil-nama" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="profil-nip" class="block text-sm font-medium text-gray-700">NIP</label>
+                                            <input type="text" id="profil-nip" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="profil-jabatan" class="block text-sm font-medium text-gray-700">Jabatan</label>
+                                            <input type="text" id="profil-jabatan" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <hr class="my-6">
+                                        <h4 class="text-md font-semibold text-gray-800">Ubah Sandi</h4>
+                                        <div>
+                                            <label for="sandi-lama" class="block text-sm font-medium text-gray-700">Sandi Lama</label>
+                                            <input type="password" id="sandi-lama" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="sandi-baru" class="block text-sm font-medium text-gray-700">Sandi Baru (min. 6 karakter)</label>
+                                            <input type="password" id="sandi-baru" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="konfirmasi-sandi-baru" class="block text-sm font-medium text-gray-700">Konfirmasi Sandi Baru</label>
+                                            <input type="password" id="konfirmasi-sandi-baru" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <div class="flex justify-end">
+                                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Halaman: Daftar Pegawai (Hanya Admin) -->
+                    <div id="pegawai-page" class="page-content hidden">
+                        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                            <h2 id="pegawai-form-title" class="text-2xl font-semibold mb-6 border-b pb-4">Tambah Pegawai Baru</h2>
+                            <form id="pegawai-form" class="space-y-4">
+                                <input type="hidden" id="pegawai-id">
+                                <div>
+                                    <label for="pegawai-nip" class="block text-sm font-medium text-gray-700">NIP</label>
+                                    <input type="text" id="pegawai-nip" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="pegawai-nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                                    <input type="text" id="pegawai-nama" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="pegawai-jabatan" class="block text-sm font-medium text-gray-700">Jabatan</label>
+                                    <input type="text" id="pegawai-jabatan" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="pegawai-sandi" class="block text-sm font-medium text-gray-700">Sandi</label>
+                                    <input type="password" id="pegawai-sandi" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div class="flex justify-end space-x-4">
+                                    <button type="button" id="batal-edit-pegawai-btn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 hidden">Batal</button>
+                                    <button type="submit" id="simpan-pegawai-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Simpan Pegawai</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h2 class="text-2xl font-semibold mb-6 border-b pb-4">Daftar Pegawai</h2>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NIP</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jabatan</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pegawai-list-body" class="bg-white divide-y divide-gray-200">
+                                        <!-- Daftar pegawai akan dimuat di sini -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Halaman: Rencana Bulanan -->
+                    <div id="rencana-page" class="page-content hidden">
+                         <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                            <h2 class="text-2xl font-semibold mb-6 border-b pb-4">Buat Rencana Bulanan</h2>
+                            <form id="rencana-form" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="form-group">
+                                        <label for="rencana-nama" class="block text-sm font-medium text-gray-700 mb-1">Nama Pegawai</label>
+                                        <input type="text" id="rencana-nama" required readonly class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="rencana-bulan" class="block text-sm font-medium text-gray-700 mb-1">Bulan & Tahun</label>
+                                        <input type="month" id="rencana-bulan" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-800 mb-2">Daftar Kegiatan</h3>
+                                    <div class="hidden sm:grid grid-cols-12 gap-3 mb-2 text-sm font-medium text-gray-500">
+                                        <div class="col-span-1">No.</div>
+                                        <div class="col-span-6">Kegiatan Tugas Jabatan</div>
+                                        <div class="col-span-2">Jumlah</div>
+                                        <div class="col-span-2">Satuan</div>
+                                        <div class="col-span-1"></div>
+                                    </div>
+                                    <div id="rencana-kegiatan-container" class="space-y-4"></div>
+                                    <button type="button" id="tambah-rencana-kegiatan-btn" class="mt-4 inline-flex items-center px-4 py-2 border border-dashed border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200">
+                                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                        Tambah Kegiatan
+                                    </button>
+                                </div>
+
+                                <div class="flex justify-end pt-4 border-t">
+                                    <button type="submit" id="rencana-submit-button" class="inline-flex items-center justify-center px-6 py-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition">Simpan Rencana</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                             <h2 class="text-2xl font-semibold mb-6 border-b pb-4">Daftar Rencana Kerja Tersimpan</h2>
+                             <div id="rencana-list" class="space-y-4"></div>
+                        </div>
+                    </div>
+
+                    <!-- Halaman: Laporan Harian -->
+                    <div id="laporan-page" class="page-content hidden">
+                        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                            <h2 class="text-2xl font-semibold mb-6 border-b pb-4">Buat Laporan Harian</h2>
+                            <form id="laporan-form" class="space-y-6">
+                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="form-group">
+                                        <label for="laporan-nama" class="block text-sm font-medium text-gray-700 mb-1">Nama Pegawai</label>
+                                        <input type="text" id="laporan-nama" required readonly class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="laporan-tanggal" class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                                        <input type="date" id="laporan-tanggal" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-800 mb-2">Daftar Kegiatan Harian</h3>
+                                    <div class="hidden sm:grid grid-cols-12 gap-3 mb-2 text-sm font-medium text-gray-500">
+                                        <div class="col-span-1">No.</div>
+                                        <div class="col-span-4">Kegiatan Tugas Jabatan</div>
+                                        <div class="col-span-2">Jumlah</div>
+                                        <div class="col-span-1">Satuan</div>
+                                        <div class="col-span-3">Upload Dokumen</div>
+                                        <div class="col-span-1"></div>
+                                    </div>
+                                    <div id="laporan-kegiatan-container" class="space-y-4"></div>
+                                    <button type="button" id="tambah-laporan-kegiatan-btn" class="mt-4 inline-flex items-center px-4 py-2 border border-dashed border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200">
+                                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                        Tambah Kegiatan
+                                    </button>
+                                </div>
+
+                                <div class="flex justify-end pt-4 border-t">
+                                    <button type="submit" id="laporan-submit-button" class="inline-flex items-center justify-center px-6 py-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition">Simpan Laporan</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Halaman: Rekap Laporan -->
+                    <div id="rekap-page" class="page-content hidden">
+                       <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                                <h2 class="text-2xl font-semibold">Rekapitulasi Laporan Harian</h2>
+                                <button id="download-rekap-btn" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700">
+                                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                                    Download Rekap
+                                </button>
+                            </div>
+                             <!-- Filter -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <label for="rekap-filter-nama" class="block text-sm font-medium text-gray-700">Nama Pegawai</label>
+                                    <input type="text" id="rekap-filter-nama" placeholder="Ketik nama untuk filter..." class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                                </div>
+                                <div>
+                                    <label for="rekap-filter-tanggal-mulai" class="block text-sm font-medium text-gray-700">Dari Tanggal</label>
+                                    <input type="date" id="rekap-filter-tanggal-mulai" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                                </div>
+                                <div>
+                                    <label for="rekap-filter-tanggal-selesai" class="block text-sm font-medium text-gray-700">Sampai Tanggal</label>
+                                    <input type="date" id="rekap-filter-tanggal-selesai" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                                </div>
+                            </div>
+                            <!-- Daftar Rekap -->
+                            <div id="rekap-list" class="space-y-4"></div>
+                            <p id="rekap-empty-state" class="text-center text-gray-500 py-8">Tidak ada data laporan untuk ditampilkan.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Halaman: Pengaturan -->
+                    <div id="pengaturan-page" class="page-content hidden">
+                       <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h2 class="text-2xl font-semibold mb-6 border-b pb-4">Pengaturan Aplikasi</h2>
+                            <form id="pengaturan-form" class="space-y-6 max-w-lg">
+                                <div>
+                                    <label for="login-title-input" class="block text-sm font-medium text-gray-700">Ubah Judul Halaman Login</label>
+                                    <input type="text" id="login-title-input" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Ubah Logo Aplikasi</label>
+                                    <div class="mt-1 flex items-center">
+                                        <img id="logo-preview" src="https://placehold.co/100x100/E2E8F0/4A5568?text=Logo" class="h-16 w-16 rounded-full object-cover">
+                                        <input type="file" id="logo-input" accept="image/*" class="ml-4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                    </div>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Simpan Pengaturan</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Notifikasi -->
+    <div id="notification-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"><div class="mt-3 text-center"><div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100"><svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div><h3 class="text-lg leading-6 font-medium text-gray-900 mt-2" id="notification-title">Berhasil!</h3><div class="mt-2 px-7 py-3"><p class="text-sm text-gray-500" id="notification-message">Laporan Anda telah berhasil disimpan.</p></div><div class="items-center px-4 py-3"><button id="close-notification" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600">Tutup</button></div></div></div>
+    </div>
+
+    <script type="module">
+        // --- DOM Elements ---
+        const loginScreen = document.getElementById('login-screen');
+        const loginTitle = document.getElementById('login-title');
+        const loginLogo = document.getElementById('login-logo');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const dashboardLogo = document.getElementById('dashboard-logo');
+        const loginForm = document.getElementById('login-form');
+        const messageDiv = document.getElementById('message');
+        const logoutButton = document.getElementById('logout-button');
+        const userNameDisplay = document.getElementById('user-name-display');
+        const userNipDisplay = document.getElementById('user-nip-display');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pageContents = document.querySelectorAll('.page-content');
+        const pageTitle = document.getElementById('page-title');
+        const menuButton = document.getElementById('menu-button');
+        const sidebar = document.getElementById('sidebar');
+        
+        const utamaTabNav = document.getElementById('utama-tab-nav');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        const profilNamaDisplay = document.getElementById('profil-nama-display');
+        const profilNipDisplay = document.getElementById('profil-nip-display');
+        const profilJabatanDisplay = document.getElementById('profil-jabatan-display');
+        const ubahProfilForm = document.getElementById('ubah-profil-form');
+        const profilNamaInput = document.getElementById('profil-nama');
+        const profilNipInput = document.getElementById('profil-nip');
+        const profilJabatanInput = document.getElementById('profil-jabatan');
+        const sandiLamaInput = document.getElementById('sandi-lama');
+        const sandiBaruInput = document.getElementById('sandi-baru');
+        const konfirmasiSandiBaruInput = document.getElementById('konfirmasi-sandi-baru');
+
+        const rencanaForm = document.getElementById('rencana-form');
+        const rencanaKegiatanContainer = document.getElementById('rencana-kegiatan-container');
+        const tambahRencanaKegiatanBtn = document.getElementById('tambah-rencana-kegiatan-btn');
+        const rencanaList = document.getElementById('rencana-list');
+        
+        const laporanForm = document.getElementById('laporan-form');
+        const laporanKegiatanContainer = document.getElementById('laporan-kegiatan-container');
+        const tambahLaporanKegiatanBtn = document.getElementById('tambah-laporan-kegiatan-btn');
+        
+        const rekapList = document.getElementById('rekap-list');
+        const rekapEmptyState = document.getElementById('rekap-empty-state');
+        const filterNama = document.getElementById('rekap-filter-nama');
+        const filterTglMulai = document.getElementById('rekap-filter-tanggal-mulai');
+        const filterTglSelesai = document.getElementById('rekap-filter-tanggal-selesai');
+        const downloadRekapBtn = document.getElementById('download-rekap-btn');
+        
+        const pengaturanMenu = document.getElementById('pengaturan-menu');
+        const pengaturanForm = document.getElementById('pengaturan-form');
+        const loginTitleInput = document.getElementById('login-title-input');
+        const logoInput = document.getElementById('logo-input');
+        const logoPreview = document.getElementById('logo-preview');
+        const pegawaiMenu = document.getElementById('pegawai-menu');
+        const pegawaiListBody = document.getElementById('pegawai-list-body');
+        const pegawaiForm = document.getElementById('pegawai-form');
+        const pegawaiFormTitle = document.getElementById('pegawai-form-title');
+        const pegawaiIdInput = document.getElementById('pegawai-id');
+        const pegawaiNipInput = document.getElementById('pegawai-nip');
+        const pegawaiNamaInput = document.getElementById('pegawai-nama');
+        const pegawaiJabatanInput = document.getElementById('pegawai-jabatan');
+        const pegawaiSandiInput = document.getElementById('pegawai-sandi');
+        const batalEditBtn = document.getElementById('batal-edit-pegawai-btn');
+
+        const adminViewBanner = document.getElementById('admin-view-banner');
+        const adminViewingName = document.getElementById('admin-viewing-name');
+        const returnToAdminBtn = document.getElementById('return-to-admin-btn');
+
+        let currentUser = null;
+        let originalAdminUser = null; // Untuk menyimpan sesi admin
+        let users = [
+            { nip: "199001012020121001", sandi: "pegawai123", nama: "Budi Santoso", jabatan: "Staf Pelaksana" },
+            { nip: "199205102020122005", sandi: "sandi456", nama: "Citra Lestari", jabatan: "Analis" },
+            { nip: "admin", sandi: "admin123", nama: "Administrator", jabatan: "Kepala Bagian" }
+        ];
+        let allRencanaData = [];
+        let allLaporanData = [];
+        
+        // --- Logika Halaman Login & Pengaturan ---
+        function loadSettings() {
+            const savedTitle = localStorage.getItem('loginTitleLKH');
+            const savedLogo = localStorage.getItem('appLogoLKH');
+            
+            if (savedTitle) {
+                loginTitle.textContent = savedTitle;
+                loginTitleInput.value = savedTitle;
+            } else {
+                loginTitle.textContent = 'Dasbor LKH';
+                loginTitleInput.value = 'Dasbor LKH';
+            }
+
+            if (savedLogo) {
+                loginLogo.src = savedLogo;
+                dashboardLogo.src = savedLogo;
+                logoPreview.src = savedLogo;
+            }
+        }
+        loadSettings(); 
+
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nipInput = document.getElementById('nip').value;
+            const passwordInput = document.getElementById('password').value;
+            
+            const foundUser = users.find(user => user.nip === nipInput);
+
+            if (foundUser && foundUser.sandi === passwordInput) {
+                currentUser = {...foundUser}; 
+                loginScreen.classList.add('hidden');
+                dashboardScreen.classList.remove('hidden');
+                updateProfileInfo();
+                document.getElementById('rencana-nama').value = currentUser.nama;
+                document.getElementById('laporan-nama').value = currentUser.nama;
+                
+                if (currentUser.nip === 'admin') {
+                    pengaturanMenu.style.display = 'flex';
+                    pegawaiMenu.style.display = 'flex';
+                    renderPegawaiList();
+                } else {
+                    pengaturanMenu.style.display = 'none';
+                    pegawaiMenu.style.display = 'none';
+                }
+            } else {
+                messageDiv.textContent = "NIP atau Sandi yang Anda masukkan salah.";
+            }
+        });
+        
+        pengaturanForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newTitle = loginTitleInput.value;
+            localStorage.setItem('loginTitleLKH', newTitle);
+            showNotification('Berhasil', 'Pengaturan telah disimpan.');
+            loadSettings(); 
+        });
+
+        logoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const base64String = event.target.result;
+                    localStorage.setItem('appLogoLKH', base64String);
+                    loadSettings(); // Reload settings to show preview
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        function updateProfileInfo() {
+            if (currentUser) {
+                userNameDisplay.textContent = currentUser.nama;
+                userNipDisplay.textContent = `NIP: ${currentUser.nip}`;
+                profilNamaDisplay.textContent = currentUser.nama;
+                profilNipDisplay.textContent = `NIP: ${currentUser.nip}`;
+                profilJabatanDisplay.textContent = `Jabatan: ${currentUser.jabatan}`;
+                profilNamaInput.value = currentUser.nama;
+                profilNipInput.value = currentUser.nip;
+                profilJabatanInput.value = currentUser.jabatan;
+            }
+        }
+
+        // --- Logika Logout ---
+        logoutButton.addEventListener('click', () => {
+            currentUser = null;
+            originalAdminUser = null;
+            dashboardScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            document.getElementById('nip').value = '';
+            document.getElementById('password').value = '';
+            messageDiv.textContent = '';
+            pengaturanMenu.style.display = 'none'; 
+            pegawaiMenu.style.display = 'none';
+            adminViewBanner.classList.add('hidden');
+        });
+
+        // --- Logika Dasbor ---
+        menuButton.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                pageContents.forEach(page => page.classList.add('hidden'));
+                document.getElementById(`${targetId}-page`).classList.remove('hidden');
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                link.classList.add('active');
+                pageTitle.textContent = link.textContent.trim();
+                if (window.innerWidth < 768) {
+                   sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
+        
+        // --- Halaman Utama Tab Logic ---
+        utamaTabNav.addEventListener('click', (e) => {
+            if (e.target.matches('.tab-button')) {
+                const targetTab = e.target.dataset.tab;
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                tabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+            }
+        });
+        
+        // --- Ubah Profil & Sandi Logic ---
+        ubahProfilForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            // Validasi Sandi Lama
+            if (sandiLamaInput.value !== currentUser.sandi) {
+                showNotification('Gagal', 'Sandi lama yang Anda masukkan salah.');
+                return;
+            }
+
+            // Validasi Sandi Baru
+            if (sandiBaruInput.value.length < 6) {
+                showNotification('Gagal', 'Sandi baru minimal harus 6 karakter.');
+                return;
+            }
+            if (sandiBaruInput.value !== konfirmasiSandiBaruInput.value) {
+                showNotification('Gagal', 'Konfirmasi sandi baru tidak cocok.');
+                return;
+            }
+
+            // Update data di array 'users'
+            const userIndex = users.findIndex(user => user.nip === currentUser.nip);
+            if (userIndex !== -1) {
+                users[userIndex].nama = profilNamaInput.value;
+                users[userIndex].nip = profilNipInput.value;
+                users[userIndex].jabatan = profilJabatanInput.value;
+                users[userIndex].sandi = sandiBaruInput.value;
+                
+                currentUser = {...users[userIndex]};
+                
+                updateProfileInfo();
+                showNotification('Berhasil', 'Profil dan sandi telah berhasil diperbarui.');
+                sandiLamaInput.value = '';
+                sandiBaruInput.value = '';
+                konfirmasiSandiBaruInput.value = '';
+            }
+        });
+
+        // --- DAFTAR PEGAWAI (ADMIN) ---
+        function renderPegawaiList() {
+            pegawaiListBody.innerHTML = '';
+            const allPegawai = users.filter(user => user.nip !== 'admin');
+            
+            if (allPegawai.length > 0) {
+                allPegawai.forEach(pegawai => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${pegawai.nip}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${pegawai.nama}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${pegawai.jabatan}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-900" onclick="window.editPegawai('${pegawai.nip}')">Ubah</button>
+                            <button class="text-red-600 hover:text-red-900" onclick="window.deletePegawai('${pegawai.nip}')">Hapus</button>
+                            <button class="text-green-600 hover:text-green-900" onclick="window.viewAsPegawai('${pegawai.nip}')">Lihat</button>
+                        </td>
+                    `;
+                    pegawaiListBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Tidak ada data pegawai.</td>`;
+                pegawaiListBody.appendChild(row);
+            }
+        }
+
+        pegawaiForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = pegawaiIdInput.value;
+            const nip = pegawaiNipInput.value;
+            const nama = pegawaiNamaInput.value;
+            const jabatan = pegawaiJabatanInput.value;
+            const sandi = pegawaiSandiInput.value;
+
+            if (id) { // Mode Edit
+                const userIndex = users.findIndex(user => user.nip === id);
+                if (userIndex !== -1) {
+                    users[userIndex] = { nip, nama, jabatan, sandi };
+                }
+            } else { // Mode Tambah
+                 if (users.some(user => user.nip === nip)) {
+                    showNotification('Gagal', 'NIP sudah digunakan. Harap gunakan NIP yang unik.');
+                    return;
+                }
+                users.push({ nip, nama, jabatan, sandi });
+            }
+            
+            renderPegawaiList();
+            resetPegawaiForm();
+            showNotification('Berhasil', `Data pegawai telah berhasil ${id ? 'diperbarui' : 'ditambahkan'}.`);
+        });
+
+        window.editPegawai = (nip) => {
+            const user = users.find(u => u.nip === nip);
+            if (user) {
+                pegawaiFormTitle.textContent = 'Ubah Data Pegawai';
+                pegawaiIdInput.value = user.nip;
+                pegawaiNipInput.value = user.nip;
+                pegawaiNamaInput.value = user.nama;
+                pegawaiJabatanInput.value = user.jabatan;
+                pegawaiSandiInput.value = user.sandi;
+                batalEditBtn.style.display = 'inline-flex';
+            }
+        };
+
+        window.deletePegawai = (nip) => {
+            if (confirm(`Apakah Anda yakin ingin menghapus pegawai dengan NIP ${nip}?`)) {
+                users = users.filter(user => user.nip !== nip);
+                renderPegawaiList();
+                showNotification('Berhasil', 'Data pegawai telah dihapus.');
+            }
+        };
+        
+        window.viewAsPegawai = (nip) => {
+            const targetUser = users.find(u => u.nip === nip);
+            if (targetUser) {
+                originalAdminUser = {...currentUser}; // Simpan sesi admin
+                currentUser = {...targetUser};
+                
+                updateProfileInfo();
+                pengaturanMenu.style.display = 'none';
+                pegawaiMenu.style.display = 'none';
+                
+                adminViewingName.textContent = currentUser.nama;
+                adminViewBanner.classList.remove('hidden');
+
+                // Pindah ke halaman utama
+                document.querySelector('a[href="#utama"]').click();
+            }
+        };
+
+        returnToAdminBtn.addEventListener('click', () => {
+            if (originalAdminUser) {
+                currentUser = {...originalAdminUser};
+                originalAdminUser = null;
+                
+                updateProfileInfo();
+                pengaturanMenu.style.display = 'flex';
+                pegawaiMenu.style.display = 'flex';
+                adminViewBanner.classList.add('hidden');
+
+                // Kembali ke halaman daftar pegawai
+                document.querySelector('a[href="#pegawai"]').click();
+            }
+        });
+        
+        function resetPegawaiForm() {
+            pegawaiForm.reset();
+            pegawaiIdInput.value = '';
+            pegawaiFormTitle.textContent = 'Tambah Pegawai Baru';
+            batalEditBtn.style.display = 'none';
+        }
+
+        batalEditBtn.addEventListener('click', resetPegawaiForm);
+
+        // --- RENCANA BULANAN LOGIC ---
+        function updateRencanaRowNumbers() {
+            const rows = rencanaKegiatanContainer.querySelectorAll('.rencana-kegiatan-row');
+            rows.forEach((row, index) => {
+                row.querySelector('.row-number').textContent = index + 1;
+            });
+        }
+
+        function createRencanaKegiatanRow() {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-12 gap-3 items-center rencana-kegiatan-row';
+            row.innerHTML = `
+                <div class="col-span-1 text-center font-semibold text-gray-600 row-number"></div>
+                <div class="col-span-6">
+                    <input type="text" placeholder="Kegiatan Tugas Jabatan" class="kegiatan-tugas w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="col-span-2">
+                    <input type="number" placeholder="Jumlah" class="kegiatan-jumlah w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="col-span-2">
+                    <input type="text" placeholder="Satuan" class="kegiatan-satuan w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="col-span-1 flex justify-end">
+                    <button type="button" class="hapus-rencana-kegiatan-btn p-2 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            `;
+            rencanaKegiatanContainer.appendChild(row);
+            updateRencanaRowNumbers();
+        }
+        createRencanaKegiatanRow();
+        tambahRencanaKegiatanBtn.addEventListener('click', createRencanaKegiatanRow);
+        rencanaKegiatanContainer.addEventListener('click', function(e) {
+            if (e.target.closest('.hapus-rencana-kegiatan-btn')) {
+                if (rencanaKegiatanContainer.querySelectorAll('.rencana-kegiatan-row').length > 1) {
+                    e.target.closest('.rencana-kegiatan-row').remove();
+                    updateRencanaRowNumbers();
+                } else { alert('Minimal harus ada satu kegiatan.'); }
+            }
+        });
+
+        rencanaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const kegiatanList = [];
+            document.querySelectorAll('.rencana-kegiatan-row').forEach(row => {
+                kegiatanList.push({
+                    tugas: row.querySelector('.kegiatan-tugas').value,
+                    jumlah: row.querySelector('.kegiatan-jumlah').value,
+                    satuan: row.querySelector('.kegiatan-satuan').value,
+                });
+            });
+
+            const rencanaData = {
+                nama: document.getElementById('rencana-nama').value,
+                bulan: document.getElementById('rencana-bulan').value,
+                kegiatan: kegiatanList,
+                id: Date.now()
+            };
+            allRencanaData.push(rencanaData);
+            renderRencanaList();
+            rencanaForm.reset();
+            rencanaKegiatanContainer.innerHTML = '';
+            createRencanaKegiatanRow();
+            document.getElementById('rencana-nama').value = currentUser.nama;
+            showNotification('Berhasil', 'Rencana bulanan berhasil disimpan.');
+        });
+        
+        function renderRencanaList() {
+            rencanaList.innerHTML = '';
+            if (allRencanaData.length === 0) {
+                rencanaList.innerHTML = '<p class="text-center text-gray-500">Belum ada rencana yang disimpan.</p>';
+                return;
+            }
+            allRencanaData.forEach(item => {
+                const [year, month] = item.bulan.split('-');
+                const formattedMonth = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+                let kegiatanHtml = '<table class="min-w-full text-sm mt-2"><thead><tr class="bg-gray-50"><th class="p-2 text-left">No</th><th class="p-2 text-left">Kegiatan</th><th class="p-2 text-left">Output</th></tr></thead><tbody>';
+                item.kegiatan.forEach((k, index) => {
+                    kegiatanHtml += `<tr class="border-t"><td class="p-2">${index + 1}</td><td class="p-2">${k.tugas}</td><td class="p-2">${k.jumlah} ${k.satuan}</td></tr>`;
+                });
+                kegiatanHtml += '</tbody></table>';
+
+                const card = document.createElement('div');
+                card.className = 'p-4 border rounded-lg';
+                card.innerHTML = `
+                    <div>
+                        <p class="font-bold">${item.nama}</p>
+                        <p class="text-sm text-gray-600">${formattedMonth}</p>
+                    </div>
+                    ${kegiatanHtml}
+                `;
+                rencanaList.appendChild(card);
+            });
+        }
+        
+        // --- LAPORAN HARIAN LOGIC ---
+        function updateLaporanRowNumbers() {
+            const rows = laporanKegiatanContainer.querySelectorAll('.laporan-kegiatan-row');
+            rows.forEach((row, index) => {
+                row.querySelector('.row-number').textContent = index + 1;
+            });
+        }
+
+        function createLaporanKegiatanRow() {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-12 gap-3 items-center laporan-kegiatan-row';
+            row.innerHTML = `
+                <div class="col-span-1 text-center font-semibold text-gray-600 row-number"></div>
+                <div class="col-span-11 sm:col-span-4">
+                    <input type="text" placeholder="Kegiatan Tugas Jabatan" class="kegiatan-tugas w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="col-span-6 sm:col-span-2">
+                    <input type="number" placeholder="Jumlah" class="kegiatan-jumlah w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="col-span-6 sm:col-span-1">
+                    <input type="text" placeholder="Satuan" class="kegiatan-satuan w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="col-span-11 sm:col-span-3">
+                    <input type="file" class="kegiatan-dokumen w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+                <div class="col-span-1 flex justify-end">
+                    <button type="button" class="hapus-laporan-kegiatan-btn p-2 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            `;
+            laporanKegiatanContainer.appendChild(row);
+            updateLaporanRowNumbers();
+        }
+        createLaporanKegiatanRow();
+        tambahLaporanKegiatanBtn.addEventListener('click', createLaporanKegiatanRow);
+        laporanKegiatanContainer.addEventListener('click', function(e) {
+            if (e.target.closest('.hapus-laporan-kegiatan-btn')) {
+                if (laporanKegiatanContainer.querySelectorAll('.laporan-kegiatan-row').length > 1) {
+                    e.target.closest('.laporan-kegiatan-row').remove();
+                    updateLaporanRowNumbers();
+                } else { alert('Minimal harus ada satu kegiatan.'); }
+            }
+        });
+        
+        laporanForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const kegiatanList = [];
+            document.querySelectorAll('.laporan-kegiatan-row').forEach(row => {
+                const fileInput = row.querySelector('.kegiatan-dokumen');
+                kegiatanList.push({
+                    tugas: row.querySelector('.kegiatan-tugas').value,
+                    jumlah: row.querySelector('.kegiatan-jumlah').value,
+                    satuan: row.querySelector('.kegiatan-satuan').value,
+                    dokumen: fileInput.files[0] ? fileInput.files[0].name : null
+                });
+            });
+
+            const laporanData = {
+                nama: document.getElementById('laporan-nama').value,
+                tanggal: document.getElementById('laporan-tanggal').value,
+                kegiatanList: kegiatanList,
+                id: Date.now()
+            };
+            allLaporanData.push(laporanData);
+            renderRekapList(); // Update rekap list
+            laporanForm.reset();
+            laporanKegiatanContainer.innerHTML = '';
+            createLaporanKegiatanRow();
+            document.getElementById('laporan-nama').value = currentUser.nama;
+            showNotification('Berhasil', 'Laporan harian berhasil disimpan.');
+        });
+        
+        // --- REKAP LAPORAN LOGIC ---
+        [filterNama, filterTglMulai, filterTglSelesai].forEach(el => el.addEventListener('input', renderRekapList));
+
+        function renderRekapList() {
+            rekapList.innerHTML = '';
+            
+            const namaFilter = filterNama.value.toLowerCase();
+            const tanggalMulaiFilter = filterTglMulai.value;
+            const tanggalSelesaiFilter = filterTglSelesai.value;
+
+            const filteredData = allLaporanData.filter(item => {
+                const namaMatch = item.nama.toLowerCase().includes(namaFilter);
+                const tanggalMatch = (!tanggalMulaiFilter || item.tanggal >= tanggalMulaiFilter) &&
+                                   (!tanggalSelesaiFilter || item.tanggal <= tanggalSelesaiFilter);
+                return namaMatch && tanggalMatch;
+            });
+
+            if (filteredData.length === 0) {
+                rekapEmptyState.style.display = 'block';
+                return;
+            }
+            rekapEmptyState.style.display = 'none';
+
+            filteredData.forEach(item => {
+                const formattedDate = new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                let kegiatanHtml = '<table class="min-w-full text-sm mt-2"><thead><tr class="bg-gray-50"><th class="p-2 text-left">No</th><th class="p-2 text-left">Kegiatan</th><th class="p-2 text-left">Output</th></tr></thead><tbody>';
+                item.kegiatanList.forEach((k, index) => {
+                    kegiatanHtml += `<tr class="border-t"><td class="p-2">${index + 1}</td><td class="p-2">${k.tugas}</td><td class="p-2">${k.jumlah} ${k.satuan}</td></tr>`;
+                });
+                kegiatanHtml += '</tbody></table>';
+
+                const card = document.createElement('div');
+                card.className = 'p-4 border rounded-lg bg-white';
+                card.innerHTML = `
+                    <div>
+                        <p class="font-bold">${item.nama}</p>
+                        <p class="text-sm text-gray-600">${formattedDate}</p>
+                    </div>
+                    ${kegiatanHtml}
+                `;
+                rekapList.appendChild(card);
+            });
+        }
+        
+        downloadRekapBtn.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const namaFilter = filterNama.value.toLowerCase();
+            const tanggalMulaiFilter = filterTglMulai.value;
+            const tanggalSelesaiFilter = filterTglSelesai.value;
+
+            const filteredData = allLaporanData.filter(item => {
+                const namaMatch = item.nama.toLowerCase().includes(namaFilter);
+                const tanggalMatch = (!tanggalMulaiFilter || item.tanggal >= tanggalMulaiFilter) &&
+                                   (!tanggalSelesaiFilter || item.tanggal <= tanggalSelesaiFilter);
+                return namaMatch && tanggalMatch;
+            });
+
+            if (filteredData.length === 0) {
+                showNotification('Info', 'Tidak ada data untuk di-download.');
+                return;
+            }
+
+            let yPos = 15;
+
+            doc.setFontSize(18);
+            doc.text("Rekap Laporan Kerja Harian", 14, yPos);
+            yPos += 10;
+
+            filteredData.forEach(item => {
+                if (yPos > 260) {
+                    doc.addPage();
+                    yPos = 15;
+                }
+
+                const formattedDate = new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text(item.nama, 14, yPos);
+                yPos += 6;
+
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(formattedDate, 14, yPos);
+                yPos += 8;
+
+                const tableHead = [['No', 'Kegiatan', 'Output']];
+                const tableBody = item.kegiatanList.map((k, index) => [
+                    index + 1,
+                    k.tugas,
+                    `${k.jumlah} ${k.satuan}`
+                ]);
+
+                doc.autoTable({
+                    head: tableHead,
+                    body: tableBody,
+                    startY: yPos,
+                    theme: 'grid',
+                    headStyles: { fillColor: [41, 128, 185] },
+                    styles: { fontSize: 8 },
+                });
+
+                yPos = doc.autoTable.previous.finalY + 15;
+            });
+
+            doc.save(`rekap-lkh-${new Date().toISOString().slice(0,10)}.pdf`);
+        });
+
+        // --- Notification Logic ---
+        function showNotification(title, message) {
+            document.getElementById('notification-title').innerText = title;
+            document.getElementById('notification-message').innerText = message;
+            document.getElementById('notification-modal').classList.remove('hidden');
+        }
+        document.getElementById('close-notification').addEventListener('click', () => {
+            document.getElementById('notification-modal').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
